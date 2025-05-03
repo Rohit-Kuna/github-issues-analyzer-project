@@ -37,10 +37,17 @@ export const calculateWeeklyMetrics = (issues) => {
   });
 
   // Calculate closure rates
-  weeklyData.forEach(week => {
-    week.closureRate = week.created > 0 
-      ? (week.closed / week.created) * 100 
-      : 0;
+  weeklyData.forEach((week, index) => {
+    const weekStart = dayjs(week.weekStart);
+    const openAtStart = issues.filter(issue => {
+      const createdDate = dayjs(issue.created_at);
+      const closedDate = issue.closed_at ? dayjs(issue.closed_at) : null;
+      return createdDate.isBefore(weekStart) && (!closedDate || closedDate.isAfter(weekStart));
+    }).length;
+    const createdThisWeek = week.created;
+    const closedThisWeek = week.closed;
+    const denominator = openAtStart + createdThisWeek;
+    week.closureRate = denominator > 0 ? (closedThisWeek / denominator) * 100 : 0;
   });
 
   return weeklyData;
